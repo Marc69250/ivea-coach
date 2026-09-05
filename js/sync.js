@@ -107,7 +107,10 @@ export function isSignedIn() {
 
 export async function signIn() {
   const msal = await getMsal();
-  await msal.loginRedirect({ scopes: SCOPES });
+  // "select_account" force Microsoft à toujours proposer un choix de compte
+  // (ou "Utiliser un autre compte") au lieu de réutiliser silencieusement
+  // une session déjà active dans le navigateur.
+  await msal.loginRedirect({ scopes: SCOPES, prompt: 'select_account' });
 }
 
 export async function signOut() {
