@@ -1,6 +1,6 @@
 import * as store from '../store.js';
 import { STAGES, SOURCES, OPP_TYPES, stageInfo, CLOSED_STAGES } from '../config.js';
-import { escapeHTML, relativeDayLabel, isOverdue, formatDateHuman, timeAgo } from '../utils.js';
+import { escapeHTML, relativeDayLabel, isOverdue, formatDateHuman, timeAgo, todayISO } from '../utils.js';
 import { openSheet, closeSheet, showToast, confirmAction } from '../ui.js';
 import { openFollowUpEditor } from './followup-editor.js';
 
@@ -128,6 +128,10 @@ function openOpportunityForm(existing, defaultType = 'candidature') {
         <input type="text" id="f-org" value="${escapeHTML(existing?.org || '')}" placeholder="Ex : Acme SAS" />
       </div>
       <div class="form-row">
+        <label id="entry-date-label">${type === 'candidature' ? 'Date de candidature' : 'Date de saisie'}</label>
+        <input type="date" id="f-entry-date" value="${existing?.entryDate || todayISO()}" />
+      </div>
+      <div class="form-row">
         <label>Statut</label>
         <div class="stage-picker" id="f-stage-picker">${stagePicker(type, existing?.stage || STAGES[type][0].key)}</div>
         <input type="hidden" id="f-stage" value="${existing?.stage || STAGES[type][0].key}" />
@@ -173,6 +177,7 @@ function openOpportunityForm(existing, defaultType = 'candidature') {
       segmented.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.type === currentType));
       document.getElementById('title-label').textContent = currentType === 'candidature' ? 'Intitulé du poste' : 'Projet / besoin';
       document.getElementById('org-label').textContent = currentType === 'candidature' ? 'Entreprise' : 'Client / entreprise';
+      document.getElementById('entry-date-label').textContent = currentType === 'candidature' ? 'Date de candidature' : 'Date de saisie';
       const picker = document.getElementById('f-stage-picker');
       const defaultStage = STAGES[currentType][0].key;
       picker.innerHTML = stagePicker(currentType, defaultStage);
@@ -202,6 +207,7 @@ function openOpportunityForm(existing, defaultType = 'candidature') {
       type: currentType,
       title,
       org: document.getElementById('f-org').value.trim(),
+      entryDate: document.getElementById('f-entry-date').value || todayISO(),
       stage: document.getElementById('f-stage').value,
       source: document.getElementById('f-source').value,
       amount: document.getElementById('f-amount').value ? Number(document.getElementById('f-amount').value) : null,
@@ -248,6 +254,7 @@ function openDetail(id) {
     <div class="stage-picker" id="d-stage-picker" style="margin-top:14px;">${stagePicker(o.type, o.stage)}</div>
 
     <div class="detail-list">
+      <div class="detail-list-row"><span>${o.type === 'candidature' ? 'Date de candidature' : 'Date de saisie'}</span><span>${formatDateHuman(o.entryDate || o.createdAt.slice(0, 10))}</span></div>
       ${o.source ? `<div class="detail-list-row"><span>Source</span><span>${escapeHTML(o.source)}</span></div>` : ''}
       ${o.amount ? `<div class="detail-list-row"><span>${o.type === 'candidature' ? 'Salaire visé' : 'Budget'}</span><span>${o.amount} ${o.type === 'candidature' ? 'k€' : '€'}</span></div>` : ''}
       ${o.url ? `<div class="detail-list-row"><span>Lien</span><span><a href="${escapeHTML(o.url)}" target="_blank" rel="noopener">Ouvrir ↗</a></span></div>` : ''}

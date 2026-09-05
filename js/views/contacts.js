@@ -1,6 +1,6 @@
 import * as store from '../store.js';
 import { CONTACT_STATUSES, contactStatusInfo } from '../config.js';
-import { escapeHTML, relativeDayLabel, isOverdue, initials, timeAgo, formatDateHuman } from '../utils.js';
+import { escapeHTML, relativeDayLabel, isOverdue, initials, timeAgo, formatDateHuman, todayISO } from '../utils.js';
 import { openSheet, closeSheet, showToast, confirmAction } from '../ui.js';
 import { openFollowUpEditor } from './followup-editor.js';
 
@@ -117,6 +117,10 @@ function openContactForm(existing) {
         </div>
       </div>
       <div class="form-row">
+        <label>Date de prise de contact</label>
+        <input type="date" id="f-contact-date" value="${existing?.contactDate || todayISO()}" />
+      </div>
+      <div class="form-row">
         <label>Statut</label>
         <div class="stage-picker" id="f-status-picker">${statusPicker(existing?.status || 'a_contacter')}</div>
         <input type="hidden" id="f-status" value="${existing?.status || 'a_contacter'}" />
@@ -171,6 +175,7 @@ function openContactForm(existing) {
       name,
       role: document.getElementById('f-role').value.trim(),
       org: document.getElementById('f-org').value.trim(),
+      contactDate: document.getElementById('f-contact-date').value || todayISO(),
       status: document.getElementById('f-status').value,
       email: document.getElementById('f-email').value.trim(),
       phone: document.getElementById('f-phone').value.trim(),
@@ -216,11 +221,11 @@ export function openContactDetail(id) {
     <div class="stage-picker" id="d-status-picker" style="margin-top:14px;">${statusPicker(c.status)}</div>
 
     <div class="detail-list">
+      <div class="detail-list-row"><span>Date de prise de contact</span><span>${formatDateHuman(c.contactDate || c.createdAt.slice(0, 10))}</span></div>
       ${c.email ? `<div class="detail-list-row"><span>Email</span><span><a href="mailto:${escapeHTML(c.email)}">${escapeHTML(c.email)}</a></span></div>` : ''}
       ${c.phone ? `<div class="detail-list-row"><span>Téléphone</span><span><a href="tel:${escapeHTML(c.phone)}">${escapeHTML(c.phone)}</a></span></div>` : ''}
       ${c.linkedin ? `<div class="detail-list-row"><span>LinkedIn</span><span><a href="${escapeHTML(c.linkedin)}" target="_blank" rel="noopener">Ouvrir ↗</a></span></div>` : ''}
       ${c.origin ? `<div class="detail-list-row"><span>Rencontré via</span><span>${escapeHTML(c.origin)}</span></div>` : ''}
-      <div class="detail-list-row"><span>Ajouté le</span><span>${formatDateHuman(c.createdAt.slice(0, 10))}</span></div>
       <div class="detail-list-row"><span>Mis à jour</span><span>${timeAgo(c.updatedAt)}</span></div>
     </div>
 

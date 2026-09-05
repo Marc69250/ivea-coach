@@ -24,6 +24,11 @@ overlay.addEventListener('click', (e) => {
   if (e.target === overlay) closeSheet();
 });
 
+// Fermer explicitement (annule la saisie en cours sans sauvegarder, puisque
+// rien n'est enregistré tant que le formulaire n'a pas été soumis).
+document.getElementById('sheet-close').addEventListener('click', () => closeSheet());
+document.querySelector('.sheet-handle').addEventListener('click', () => closeSheet());
+
 let toastTimer = null;
 export function showToast(msg) {
   toastEl.textContent = msg;
