@@ -1,9 +1,16 @@
 // Synchronisation optionnelle via OneDrive (Microsoft Graph), pour partager
 // les données entre plusieurs appareils (ex. iPhone + PC). Le fichier vit
-// dans le "dossier d'application" dédié que Microsoft crée automatiquement
-// (visible dans OneDrive sous Apps/Ivea Coach/) : le scope
-// Files.ReadWrite.AppFolder empêche l'app d'accéder au reste du OneDrive de
-// l'utilisateur, contrairement à Files.ReadWrite qui donnerait accès à tout.
+// dans un dossier "IveaCoach" à la racine du OneDrive de l'utilisateur,
+// visible/synchronisé normalement sur PC.
+//
+// Le scope Files.ReadWrite.AppFolder (dossier d'app isolé, imposé par
+// Microsoft) aurait été préférable pour la confidentialité, mais son
+// "special/approot" est une fonctionnalité OneDrive Personnel mal supportée
+// sur OneDrive Entreprise (comptes professionnels, architecture SharePoint) —
+// il bloque la connexion pour ces comptes. On utilise donc Files.ReadWrite
+// (accès à tout le OneDrive au niveau de la permission, mais l'app ne
+// touche que son propre dossier), qui fonctionne de façon fiable sur les
+// deux types de comptes.
 //
 // Tout est facultatif : sans "Client ID" configuré (voir Réglages), ce
 // module ne fait rien et l'app continue de fonctionner en local uniquement.
@@ -24,8 +31,8 @@ import * as store from './store.js';
 // et les comptes professionnels/scolaires (Microsoft 365) — contrairement à
 // "consumers" qui rejette ces derniers.
 const AUTHORITY = 'https://login.microsoftonline.com/common';
-const SCOPES = ['Files.ReadWrite.AppFolder', 'offline_access'];
-const GRAPH_FILE_URL = 'https://graph.microsoft.com/v1.0/me/drive/special/approot:/ivea-coach-data.json:/content';
+const SCOPES = ['Files.ReadWrite', 'offline_access'];
+const GRAPH_FILE_URL = 'https://graph.microsoft.com/v1.0/me/drive/root:/IveaCoach/ivea-coach-data.json:/content';
 const LS_CLIENT_ID = 'ivea_onedrive_client_id';
 const LS_LAST_SYNCED_AT = 'ivea_onedrive_last_synced_at';
 

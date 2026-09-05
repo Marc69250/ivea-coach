@@ -101,9 +101,9 @@ function renderSyncSection() {
         <p style="font-size:13.5px;line-height:1.5;color:var(--text-secondary);margin:0 0 10px;">
           Partage tes candidatures, prospects et contacts entre ton iPhone et ton PC via ton OneDrive.
           Il faut d'abord créer une inscription d'app gratuite sur <strong>portal.azure.com</strong>
-          (Personal Microsoft accounts only, permissions Files.ReadWrite.AppFolder + offline_access,
+          (comptes personnels et professionnels, permissions Files.ReadWrite + offline_access,
           redirect URI = l'adresse de cette app) puis coller ici l'« Application (client) ID ».
-          L'app n'aura accès qu'à son propre dossier dans ton OneDrive, pas au reste.
+          Un dossier "IveaCoach" sera créé à la racine de ton OneDrive pour y stocker les données.
         </p>
         <div class="form-row">
           <label>Client ID</label>
