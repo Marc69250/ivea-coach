@@ -113,13 +113,19 @@ export async function signIn() {
   await msal.loginRedirect({ scopes: SCOPES, prompt: 'select_account' });
 }
 
-export async function signOut() {
-  const msal = await getMsal();
-  const account = getAccount();
-  // onRedirectNavigate: () => false efface le compte du cache local (pour
-  // pouvoir en choisir un autre) sans naviguer vers Microsoft : évite les
-  // blocages liés au retour de la redirection de déconnexion.
-  await msal.logoutRedirect({ account, onRedirectNavigate: () => false });
+// Déconnexion locale uniquement : on ne passe pas par logoutRedirect (qui
+// navigue vers Microsoft et doit revenir sur l'app), trop peu fiable ici
+// selon le navigateur/contexte. On efface directement tout ce que MSAL a
+// stocké dans localStorage, en préservant explicitement les données de
+// l'app (candidatures/contacts) et la configuration OneDrive elle-même —
+// tout le reste du localStorage n'appartient qu'à MSAL dans cette app.
+export function signOut() {
+  const keep = new Set(['ivea_coach_v1', LS_CLIENT_ID, LS_LAST_SYNCED_AT]);
+  Object.keys(localStorage)
+    .filter((k) => !keep.has(k))
+    .forEach((k) => localStorage.removeItem(k));
+  msalInstance = null;
+  msalReady = null;
 }
 
 async function getToken() {
