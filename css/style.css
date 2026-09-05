@@ -372,6 +372,7 @@ input, select, textarea { font-family: inherit; }
   font-weight: 700;
   cursor: pointer;
   margin-top: 4px;
+  text-decoration: none;
 }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:active { opacity: 0.85; }

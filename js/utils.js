@@ -107,9 +107,27 @@ export function buildICS({ title, description, dateISO, hour = 9 }) {
   ].join('\r\n');
 }
 
+export function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS 13+
+}
+
+export function icsDataUri(opts) {
+  return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(buildICS(opts));
+}
+
+// Sur iOS, un lien construit et cliqué par du JS (blob: + attribut `download`,
+// ou window.location.href assigné par script) ne déclenche fiablement ni
+// téléchargement ni ouverture native de Calendrier — Safari mobile (et
+// encore plus une app ajoutée à l'écran d'accueil) n'a pas d'UI de
+// téléchargement, et bloque par ailleurs certaines navigations de scripts
+// vers des data: URI. La seule méthode qui fonctionne de façon fiable est
+// un VRAI lien <a href="data:text/calendar,..."> présent dans la page,
+// tapé directement par l'utilisateur (pas de .click() programmatique) :
+// WebKit reconnaît alors le type "text/calendar" et propose nativement
+// d'ajouter l'événement. Voir configureICSLink() dans followup-editor.js.
 export function downloadICS(opts) {
-  const ics = buildICS(opts);
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const blob = new Blob([buildICS(opts)], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
