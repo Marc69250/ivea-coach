@@ -176,6 +176,13 @@ function wireSyncSection() {
 
   const signoutBtn = document.getElementById('onedrive-signout');
   if (signoutBtn) signoutBtn.addEventListener('click', async () => {
-    await sync.signOut();
+    signoutBtn.disabled = true;
+    try {
+      await sync.signOut();
+      showToast('Déconnecté');
+    } catch (e) {
+      showToast('Déconnexion impossible');
+    }
+    render();
   });
 }

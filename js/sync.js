@@ -116,7 +116,10 @@ export async function signIn() {
 export async function signOut() {
   const msal = await getMsal();
   const account = getAccount();
-  await msal.logoutRedirect({ account, postLogoutRedirectUri: redirectUri() });
+  // onRedirectNavigate: () => false efface le compte du cache local (pour
+  // pouvoir en choisir un autre) sans naviguer vers Microsoft : évite les
+  // blocages liés au retour de la redirection de déconnexion.
+  await msal.logoutRedirect({ account, onRedirectNavigate: () => false });
 }
 
 async function getToken() {
