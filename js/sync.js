@@ -20,7 +20,10 @@
 
 import * as store from './store.js';
 
-const AUTHORITY = 'https://login.microsoftonline.com/consumers';
+// "common" accepte à la fois les comptes personnels (outlook.com, hotmail...)
+// et les comptes professionnels/scolaires (Microsoft 365) — contrairement à
+// "consumers" qui rejette ces derniers.
+const AUTHORITY = 'https://login.microsoftonline.com/common';
 const SCOPES = ['Files.ReadWrite.AppFolder', 'offline_access'];
 const GRAPH_FILE_URL = 'https://graph.microsoft.com/v1.0/me/drive/special/approot:/ivea-coach-data.json:/content';
 const LS_CLIENT_ID = 'ivea_onedrive_client_id';
