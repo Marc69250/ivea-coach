@@ -1,6 +1,8 @@
 import * as store from '../store.js';
+import * as sync from '../sync.js';
+import * as syncUI from '../sync-ui.js';
 import { showToast, confirmAction } from '../ui.js';
-import { downloadJSON, formatDateHuman } from '../utils.js';
+import { downloadJSON, formatDateHuman, timeAgo, escapeHTML } from '../utils.js';
 
 let rootEl = null;
 
@@ -31,6 +33,9 @@ function render() {
     <button class="btn btn-secondary" id="btn-export">⬇️ Exporter une sauvegarde (JSON)</button>
     <input type="file" id="import-file" accept="application/json" hidden />
     <button class="btn btn-secondary" id="btn-import">⬆️ Importer une sauvegarde</button>
+
+    <div class="section-title">Synchronisation OneDrive</div>
+    ${renderSyncSection()}
 
     <div class="section-title">Rappels & notifications</div>
     <div class="card">
@@ -78,5 +83,98 @@ function render() {
       render();
       showToast('Toutes les données ont été effacées');
     }
+  });
+
+  wireSyncSection();
+}
+
+function renderSyncSection() {
+  if (sync.msalLibMissing()) {
+    return `<div class="card"><p style="font-size:13.5px;color:var(--text-secondary);margin:0;">
+      La bibliothèque de connexion OneDrive n'a pas pu se charger (pas de connexion internet ?). Réessaie plus tard.
+    </p></div>`;
+  }
+
+  if (!sync.getClientId()) {
+    return `
+      <div class="card">
+        <p style="font-size:13.5px;line-height:1.5;color:var(--text-secondary);margin:0 0 10px;">
+          Partage tes candidatures, prospects et contacts entre ton iPhone et ton PC via ton OneDrive.
+          Il faut d'abord créer une inscription d'app gratuite sur <strong>portal.azure.com</strong>
+          (Personal Microsoft accounts only, permissions Files.ReadWrite + offline_access,
+          redirect URI = l'adresse de cette app) puis coller ici l'« Application (client) ID ».
+        </p>
+        <div class="form-row">
+          <label>Client ID</label>
+          <input type="text" id="onedrive-client-id" placeholder="ex : a1b2c3d4-e5f6-..." />
+        </div>
+        <button class="btn btn-primary" id="onedrive-save-id">Enregistrer</button>
+      </div>
+    `;
+  }
+
+  const account = sync.getAccount();
+  if (!account) {
+    return `
+      <div class="card">
+        <p style="font-size:13.5px;color:var(--text-secondary);margin:0 0 10px;">Configuré, mais non connecté.</p>
+        <button class="btn btn-primary" id="onedrive-signin">Se connecter à OneDrive</button>
+        <button class="btn btn-secondary" id="onedrive-forget" style="margin-top:8px;">Changer la configuration</button>
+      </div>
+    `;
+  }
+
+  const lastSync = sync.getLastSyncedAt();
+  return `
+    <div class="card">
+      <div class="detail-list-row"><span>Connecté</span><span>${escapeHTML(account.username || '')}</span></div>
+      <div class="detail-list-row"><span>Dernière synchro</span><span>${lastSync ? escapeHTML(timeAgo(lastSync)) : 'Jamais'}</span></div>
+    </div>
+    <button class="btn btn-primary" id="onedrive-sync-now">🔄 Synchroniser maintenant</button>
+    <button class="btn btn-secondary" id="onedrive-signout" style="margin-top:8px;">Se déconnecter</button>
+  `;
+}
+
+function wireSyncSection() {
+  const idInput = document.getElementById('onedrive-client-id');
+  if (idInput) {
+    document.getElementById('onedrive-save-id').addEventListener('click', () => {
+      const id = idInput.value.trim();
+      if (!id) { showToast('Colle le Client ID d\'abord'); return; }
+      sync.setClientId(id);
+      render();
+    });
+  }
+
+  const signinBtn = document.getElementById('onedrive-signin');
+  if (signinBtn) signinBtn.addEventListener('click', async () => {
+    signinBtn.disabled = true;
+    try {
+      await sync.signIn();
+    } catch (e) {
+      showToast('Connexion impossible');
+      signinBtn.disabled = false;
+    }
+  });
+
+  const forgetBtn = document.getElementById('onedrive-forget');
+  if (forgetBtn) forgetBtn.addEventListener('click', () => {
+    if (confirmAction('Retirer la configuration OneDrive ? La synchronisation s\'arrêtera (tes données restent en local).')) {
+      sync.clearClientId();
+      render();
+    }
+  });
+
+  const syncNowBtn = document.getElementById('onedrive-sync-now');
+  if (syncNowBtn) syncNowBtn.addEventListener('click', async () => {
+    syncNowBtn.disabled = true;
+    syncNowBtn.textContent = 'Synchronisation...';
+    await syncUI.runSync();
+    render();
+  });
+
+  const signoutBtn = document.getElementById('onedrive-signout');
+  if (signoutBtn) signoutBtn.addEventListener('click', async () => {
+    await sync.signOut();
   });
 }

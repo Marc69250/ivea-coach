@@ -1,5 +1,7 @@
 import { initRouter, onNavigate, navigateTo, getCurrentView } from './router.js';
 import * as store from './store.js';
+import * as sync from './sync.js';
+import * as syncUI from './sync-ui.js';
 import * as dashboardView from './views/dashboard.js';
 import * as pipelineView from './views/pipeline.js';
 import * as contactsView from './views/contacts.js';
@@ -78,3 +80,9 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 }
+
+// Synchronisation OneDrive (facultative, voir Réglages) : termine une
+// éventuelle connexion en cours, puis tente une synchro silencieuse au
+// démarrage pour récupérer les changements faits sur un autre appareil.
+syncUI.setOnDataChanged(() => renderView(getCurrentView()));
+sync.handleRedirectResult().then(() => syncUI.runSync({ silent: true }));

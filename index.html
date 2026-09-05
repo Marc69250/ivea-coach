@@ -81,6 +81,10 @@
 
 </div>
 
+<!-- Synchronisation OneDrive (facultative) : bibliothèque de connexion Microsoft.
+     `defer` pour ne pas bloquer l'affichage initial ; s'exécute quand même
+     avant js/main.js (même ordre relatif que les scripts de modules). -->
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js" defer></script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

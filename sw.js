@@ -2,7 +2,7 @@
 // ouverte au moins une fois (toutes les données restent en localStorage,
 // ce cache ne concerne que le code de l'app).
 
-const CACHE_NAME = 'ivea-coach-v1';
+const CACHE_NAME = 'ivea-coach-v2';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -14,6 +14,8 @@ const PRECACHE_URLS = [
   './js/config.js',
   './js/utils.js',
   './js/ui.js',
+  './js/sync.js',
+  './js/sync-ui.js',
   './js/views/dashboard.js',
   './js/views/pipeline.js',
   './js/views/contacts.js',

@@ -16,7 +16,15 @@ function todayISODate() {
 }
 
 function emptyState() {
-  return { opportunities: [], contacts: [], meta: { createdAt: nowISO() } };
+  const now = nowISO();
+  return { opportunities: [], contacts: [], meta: { createdAt: now, updatedAt: now } };
+}
+
+function normalizeMeta(meta) {
+  return {
+    createdAt: meta?.createdAt || nowISO(),
+    updatedAt: meta?.updatedAt || nowISO(),
+  };
 }
 
 function load() {
@@ -27,7 +35,7 @@ function load() {
     return {
       opportunities: Array.isArray(parsed.opportunities) ? parsed.opportunities : [],
       contacts: Array.isArray(parsed.contacts) ? parsed.contacts : [],
-      meta: parsed.meta || { createdAt: nowISO() },
+      meta: normalizeMeta(parsed.meta),
     };
   } catch (e) {
     console.error('Lecture des données impossible, réinitialisation', e);
@@ -39,6 +47,15 @@ let state = load();
 
 function persist() {
   localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+// Marque les données comme modifiées localement (horodatage utilisé par la
+// synchronisation OneDrive pour détecter qui, de l'appareil local ou du
+// fichier distant, est le plus récent) et prévient qui veut écouter — voir
+// sync.js, qui déclenche un envoi différé vers OneDrive sur cet événement.
+function touchMeta() {
+  state.meta.updatedAt = nowISO();
+  document.dispatchEvent(new CustomEvent('ivea:data-changed'));
 }
 
 // ---------- Opportunities (candidatures + prospection) ----------
@@ -76,6 +93,7 @@ export function createOpportunity(data) {
     history: [{ date: now, stage: data.stage, note: 'Créé' }],
   };
   state.opportunities.push(opp);
+  touchMeta();
   persist();
   return opp;
 }
@@ -88,6 +106,7 @@ export function updateOpportunity(id, patch) {
   if (stageChanged) {
     opp.history.push({ date: nowISO(), stage: patch.stage, note: patch.historyNote || 'Changement de statut' });
   }
+  touchMeta();
   persist();
   return opp;
 }
@@ -97,12 +116,14 @@ export function addOpportunityNote(id, note) {
   if (!opp) return null;
   opp.history.push({ date: nowISO(), stage: opp.stage, note });
   opp.updatedAt = nowISO();
+  touchMeta();
   persist();
   return opp;
 }
 
 export function deleteOpportunity(id) {
   state.opportunities = state.opportunities.filter((o) => o.id !== id);
+  touchMeta();
   persist();
 }
 
@@ -141,6 +162,7 @@ export function createContact(data) {
     archived: false,
   };
   state.contacts.push(contact);
+  touchMeta();
   persist();
   return contact;
 }
@@ -149,6 +171,7 @@ export function updateContact(id, patch) {
   const c = getContact(id);
   if (!c) return null;
   Object.assign(c, patch, { updatedAt: nowISO() });
+  touchMeta();
   persist();
   return c;
 }
@@ -158,6 +181,7 @@ export function deleteContact(id) {
   state.opportunities.forEach((o) => {
     if (o.contactId === id) o.contactId = null;
   });
+  touchMeta();
   persist();
 }
 
@@ -165,6 +189,7 @@ export function linkContactToOpportunity(contactId, opportunityId) {
   const c = getContact(contactId);
   if (c && !c.opportunityIds.includes(opportunityId)) {
     c.opportunityIds.push(opportunityId);
+    touchMeta();
     persist();
   }
 }
@@ -216,10 +241,15 @@ export function importData(json) {
   state = {
     opportunities: Array.isArray(parsed.opportunities) ? parsed.opportunities : [],
     contacts: Array.isArray(parsed.contacts) ? parsed.contacts : [],
-    meta: parsed.meta || { createdAt: nowISO() },
+    meta: normalizeMeta(parsed.meta),
   };
   persist();
 }
+
+// Remplace tout l'état par des données reçues d'ailleurs (ex. OneDrive) sans
+// déclencher 'ivea:data-changed' — sinon la synchronisation renverrait
+// aussitôt vers OneDrive les données qu'elle vient d'en recevoir.
+export const replaceAllData = importData;
 
 export function wipeAllData() {
   state = emptyState();
@@ -232,6 +262,10 @@ export function dataStats() {
     contacts: state.contacts.length,
     createdAt: state.meta.createdAt,
   };
+}
+
+export function getMeta() {
+  return { ...state.meta };
 }
 
 export { uid, nowISO, todayISODate };
