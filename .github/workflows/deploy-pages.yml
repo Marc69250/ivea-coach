@@ -26,6 +26,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Configurer Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Uploader le contenu statique
         uses: actions/upload-pages-artifact@v3
         with:
